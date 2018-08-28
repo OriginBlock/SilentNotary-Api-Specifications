@@ -1,0 +1,563 @@
+swagger: '2.0'
+info:
+  description: Silent Notary API v2.0.
+  version: '2.0'
+  title: Swagger SilentNotary API v2.0
+  termsOfService: ''
+  contact:
+    email: hello@silentnotary.io
+  license:
+    name: ''
+    url: 'https://silentnotary.io/license'
+securityDefinitions:
+  Bearer:
+    name: Authorization
+    in: header
+    type: apiKey
+    description: Please enter JWT with Bearer into field
+  oauth:
+    description: When the Identity server will appear!!!
+    type: oauth2
+    authorizationUrl: 'https://auth.silentnotary.io'
+    flow: implicit
+    scopes:
+      'write:user': ''
+      'read:user': ''
+host: api.silentnotary.io
+basePath: /v2
+tags:
+  - name: user
+    description: Application User
+  - name: profile
+    description: User profile data
+  - name: authentication
+    description: Authentication
+  - name: file
+    description: File operations
+schemes:
+  - https
+  - http
+paths:
+  /authentication/create:
+    post:
+      tags:
+        - authentication
+      operationId: Create
+      summary: Create a new User
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: request
+          in: body
+          description: user credentials data
+          required: true
+          schema:
+            $ref: '#/definitions/UserCredentialsRequest'
+      responses:
+        '201':
+          description: successful created
+        '400':
+          description: User Already Registered
+  /authentication/login:
+    post:
+      tags:
+        - authentication
+      operationId: Login
+      summary: Authenticate the user
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: request
+          description: User credentials data
+          required: true
+          schema:
+            $ref: '#/definitions/UserCredentialsRequest'
+      responses:
+        '200':
+          description: successful login
+          schema:
+            $ref: '#/definitions/LoginResponse'
+        '401':
+          description: Invalid login data
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+              code:
+                type: integer
+            example:
+              message: login fail
+              code: 12345
+  /authentication/logout:
+    get:
+      tags:
+        - authentication
+      summary: User logout
+      operationId: Logout
+      responses:
+        '200':
+          description: successful logout
+  /authentication/activate:
+    put:
+      tags:
+        - authentication
+      summary: Activate user
+      operationId: Activate
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: token
+          in: body
+          description: activation token
+          required: true
+          schema:
+            $ref: '#/definitions/TokenRequest'
+      responses:
+        '200':
+          description: ''
+  /profile:
+    get:
+      tags:
+        - profile
+      summary: Get current User profile data
+      operationId: get
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/ProfileModel'
+        '404':
+          description: User not found
+      security:
+        - Bearer: []
+      deprecated: true
+    patch:
+      tags:
+        - profile
+      summary: 'Update user''s profile data, such as first name, last name and email.'
+      operationId: Update
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: request
+          in: body
+          description: New profile data to update
+          required: true
+          schema:
+            $ref: '#/definitions/ProfileModel'
+      responses:
+        '400':
+          description: Invalid profile data
+        '404':
+          description: User not found
+      security:
+        - Bearer: []
+      deprecated: true
+  '/user/{id}':
+    get:
+      tags:
+        - user
+      summary: Get user profile data *
+      operationId: getById
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: unique user id
+          required: true
+          type: integer
+          format: int32
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/UserModel'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: User not found
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - user
+      summary: Create new  user's profile data ?
+      operationId: create
+      consumes:
+        - application/json
+      produces: []
+      parameters:
+        - name: id
+          in: path
+          description: User id
+          required: true
+          type: integer
+          format: int32
+        - name: user
+          in: body
+          description: Profile data to create
+          required: true
+          schema:
+            $ref: '#/definitions/UserModel'
+      responses:
+        '201':
+          description: Successful created
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: User not found
+        '405':
+          description: Invalid input
+      security:
+        - Bearer: []
+    put:
+      tags:
+        - user
+      summary: 'Update user''s profile data, such as first name, last name, email etc. *'
+      operationId: update
+      consumes:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: User id
+          required: true
+          type: integer
+          format: int32
+        - name: user
+          in: body
+          description: Profile data to create
+          required: true
+          schema:
+            $ref: '#/definitions/UserModel'
+      responses:
+        '200':
+          description: Successful created
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: User not found
+        '405':
+          description: Invalid input
+      security:
+        - Bearer: []
+  '/user/{id}/accountoperations':
+    get:
+      tags:
+        - user
+      summary: Get list of user's account operations *
+      operationId: accountOperations
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: User id
+          required: true
+          type: integer
+          format: int32
+      responses:
+        '200':
+          description: List of user's accunt operations
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccountOperation'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: User not found
+        '405':
+          description: Invalid input
+      security:
+        - Bearer: []
+  '/user/{id}/fileoperations':
+    get:
+      tags:
+        - user
+      summary: 'Get list of user''s file operations, such as upload, download or delete '
+      operationId: fileOperations
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: User id
+          required: true
+          type: integer
+          format: int32
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/FileOperation'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: User not found
+        '405':
+          description: Invalid input
+      security:
+        - Bearer: []
+  '/user/{id}/bankcards':
+    get:
+      tags:
+        - user
+      summary: 'Get list of user''s bank cards '
+      operationId: bankcards
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: User id
+          required: true
+          type: integer
+          format: int32
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/BankCard'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: User not found
+        '405':
+          description: Invalid input
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - user
+      summary: Add new user bank card
+      operationId: addBankCard
+      consumes:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: User id
+          required: true
+          type: integer
+          format: int32
+        - name: bankcard
+          in: body
+          description: Profile data to create
+          required: true
+          schema:
+            $ref: '#/definitions/BankCard'
+      responses:
+        '200':
+          description: ''
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: User not found
+        '405':
+          description: Invalid input
+      security:
+        - Bearer: []
+definitions:
+  UserModel:
+    description: Application user model
+    type: object
+    properties:
+      id:
+        description: key
+        type: integer
+      email:
+        description: email
+        type: string
+        format: email
+      firstname:
+        description: first name
+        type: string
+      lastname:
+        description: last name
+        type: string
+      facebookId:
+        description: facebook id
+        type: string
+      facebookName:
+        description: facebook name
+        type: string
+      telegramId:
+        description: telegram id
+        type: string
+      telegramUserName:
+        description: telegram user name
+        type: string
+      slackMemberId:
+        description: slack member id
+        type: string
+      lineUserId:
+        description: line User Id
+        type: string
+      balance:
+        description: user balance
+        type: number
+  AccountOperation:
+    description: User's account operation
+    type: object
+    properties:
+      id:
+        description: key
+        type: integer
+      User:
+        $ref: '#/definitions/UserModel'
+      Amount:
+        description: ''
+        type: number
+        format: ''
+      DateTime:
+        description: Operation date & time
+        type: string
+        format: date-time
+      Comment:
+        description: Comment
+        type: string
+  File:
+    description: File object
+    type: object
+    properties:
+      Created:
+        description: File creation date & time
+        type: string
+        format: date-time
+      Status:
+        description: File status
+        type: integer
+        enum:
+          - Unconfirmed
+          - Payed
+          - StoredInBlockchain
+          - StoredInCloud
+          - Deleted
+      Source:
+        description: File source
+        type: integer
+        enum:
+          - Mail
+          - FacebookBot
+          - WebSite
+          - TelegramBot
+          - SlackBot
+          - LineBot
+          - Mobile
+      Size:
+        description: File size
+        type: integer
+      Hash:
+        description: File hash
+        type: array
+        items:
+          type: string
+          format: byte
+      User:
+        $ref: '#/definitions/UserModel'
+      Confirmed:
+        description: File confirmation date & time
+        type: string
+        format: date-time
+      Nonce:
+        description: File nonce
+        type: array
+        items:
+          type: string
+          format: byte
+      Transaction:
+        description: ''
+        type: string
+        maxLength: 512
+      CilTransaction:
+        description: ''
+        type: string
+        maxLength: 512
+      ConversationMembers:
+        description: ''
+        type: string
+        maxLength: 2048
+      ConfirmationToken:
+        description: Confirmation Token
+        type: array
+        items:
+          type: string
+          format: byte
+      InitialFee:
+        description: Initial fee
+        type: number
+        format: decimal
+      ArchivedFiles:
+        description: File names in arcive separated by a semicolon
+        type: string
+  FileOperation:
+    description: User's file operation --
+    type: object
+  BankCard:
+    description: Bank card --
+    type: object
+  TokenRequest:
+    description: Single-use token for various operations.
+    type: object
+    properties:
+      tokenHex:
+        description: Token value in HEX format.
+        type: string
+  UserCredentialsRequest:
+    description: User Credentials Data
+    type: object
+    required:
+      - login
+      - password
+    properties:
+      login:
+        description: login
+        type: string
+      password:
+        description: password
+        type: string
+        format: password
+  ProfileModel:
+    description: User Profile Model -- will be removed!
+    type: object
+    properties:
+      email:
+        description: Email address
+        type: string
+        format: email
+      firstName:
+        description: User's first name.
+        type: string
+      lastName:
+        description: User's last name.
+        type: string
+  LoginResponse:
+    description: Response of login method
+    type: object
+    properties:
+      SessionId:
+        description: Session Id
+        type: string
+      Email:
+        description: User email
+        type: string
+        format: email
